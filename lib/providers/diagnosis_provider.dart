@@ -9,6 +9,8 @@ class DiagnosisProvider extends ChangeNotifier {
   List<Diagnosis> _history = [];
   AnalysisState _state = AnalysisState.idle;
   Map<String, double> _lastProbabilities = {};
+  bool _noDetection = false;
+  int _lastLesionCount = 1;
   String? _errorMessage;
   bool _isLoading = false;
 
@@ -16,6 +18,8 @@ class DiagnosisProvider extends ChangeNotifier {
   AnalysisState get state => _state;
   Map<String, double> get lastProbabilities =>
       Map.unmodifiable(_lastProbabilities);
+  bool get noDetection => _noDetection;
+  int get lastLesionCount => _lastLesionCount;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
 
@@ -36,15 +40,28 @@ class DiagnosisProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final probs = await MlService.instance.classify(imagePath);
-      _lastProbabilities = probs;
+      final result = await MlService.instance.classify(imagePath);
+      _lastLesionCount = MlService.instance.lastLesionCount;
 
-      final topEntry = probs.entries.first;
+      final String disease;
+      final double confidence;
+      if (result is MlDetections) {
+        _lastProbabilities = result.scores;
+        _noDetection = false;
+        disease = result.scores.entries.first.key;
+        confidence = result.scores.entries.first.value;
+      } else {
+        // MlNoDetection — no fabricated values
+        _lastProbabilities = {};
+        _noDetection = true;
+        disease = 'no_detection';
+        confidence = 0.0;
+      }
 
       final d = Diagnosis(
         imagePath: imagePath,
-        disease: topEntry.key,
-        confidence: topEntry.value,
+        disease: disease,
+        confidence: confidence,
         latitude: lat,
         longitude: lon,
         timestamp: DateTime.now(),
@@ -93,6 +110,8 @@ class DiagnosisProvider extends ChangeNotifier {
   void resetState() {
     _state = AnalysisState.idle;
     _lastProbabilities = {};
+    _noDetection = false;
+    _lastLesionCount = 1;
     _errorMessage = null;
     notifyListeners();
   }

@@ -50,6 +50,7 @@ class _ResultScreenState extends State<ResultScreen> {
     final name = info?['nameEs'] ?? d.disease;
     final severity = info?['severity'] ?? 'unknown';
     final probs = context.watch<DiagnosisProvider>().lastProbabilities;
+    final lesionCount = context.watch<DiagnosisProvider>().lastLesionCount;
 
     return Scaffold(
       appBar: AppBar(
@@ -97,54 +98,75 @@ class _ResultScreenState extends State<ResultScreen> {
             const SizedBox(height: 20),
 
             // Primary result
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withAlpha(20),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withAlpha(80)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(diseaseIcon(d.disease), color: color, size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: color,
+            if (d.disease == 'no_detection')
+              const _NoDetectionCard()
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(20),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withAlpha(80)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(diseaseIcon(d.disease), color: color, size: 28),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                            ),
                           ),
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: severityColor(severity),
-                          borderRadius: BorderRadius.circular(12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: severityColor(severity),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            severityLabel(severity),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12),
+                          ),
                         ),
-                        child: Text(
-                          severityLabel(severity),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12),
-                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _ConfidenceBar(
+                        label: 'Confianza', value: d.confidence, color: color),
+                    if (d.disease != 'sano') ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(Icons.grid_view_rounded,
+                              size: 16, color: color),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Lesiones detectadas: $lesionCount',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: color,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  _ConfidenceBar(
-                      label: 'Confianza', value: d.confidence, color: color),
-                ],
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 16),
 
             // All probabilities
@@ -302,6 +324,72 @@ class _InfoSection extends StatelessWidget {
           Text(content,
               style: TextStyle(
                   color: Colors.grey.shade700, height: 1.5)),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoDetectionCard extends StatelessWidget {
+  const _NoDetectionCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final grey = Colors.grey.shade700;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.search_off_rounded,
+                  color: Colors.grey.shade600, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'No se detectaron síntomas en esta imagen',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Para obtener un resultado confiable:',
+            style: TextStyle(fontWeight: FontWeight.w600, color: grey),
+          ),
+          const SizedBox(height: 8),
+          for (final tip in const [
+            'Acerca la cámara a una sola hoja.',
+            'Asegúrate de que la hoja ocupe la mayor parte de la imagen.',
+            'Usa luz natural directa; evita sombras y reflejos.',
+            'Revisa otras hojas antes de concluir que la planta está sana.',
+          ])
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('• ', style: TextStyle(color: grey)),
+                  Expanded(
+                    child: Text(tip,
+                        style: TextStyle(color: grey, height: 1.4)),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

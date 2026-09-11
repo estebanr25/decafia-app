@@ -10,7 +10,7 @@ import '../utils/disease_data.dart';
 const int _kInputSize = 640;
 const String _kModelAsset = 'assets/models/decafia_best.onnx';
 const Duration _kTimeout = Duration(seconds: 15);
-const double _kConfThreshold = 0.25;
+const double _kConfThreshold = 0.50;
 
 // YOLOv8 ONNX output: [1, 8, 8400]
 //   channels 0-3 → bbox (cx, cy, w, h) normalised
@@ -45,6 +45,21 @@ Float32List _preprocessBytes(Uint8List rawBytes) {
   return buffer;
 }
 
+// ── Inference result type ────────────────────────────────────────────────────
+
+sealed class MlResult {}
+
+/// Real model output: at least one class scored ≥ [_kConfThreshold].
+/// [scores] is sorted descending by value; keys are [_kYoloClasses] labels.
+class MlDetections extends MlResult {
+  final Map<String, double> scores;
+  MlDetections(this.scores);
+}
+
+/// Model ran but no class scored ≥ [_kConfThreshold].
+/// No numeric confidence is fabricated; the UI must show a neutral message.
+class MlNoDetection extends MlResult {}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MlService {
@@ -55,6 +70,9 @@ class MlService {
   bool _initialized = false;
   bool _modelMissing = false;
   Future<void>? _initFuture;
+  int _lastLesionCount = 1;
+
+  int get lastLesionCount => _lastLesionCount;
 
   Future<void> _doInit() async {
     try {
@@ -84,9 +102,9 @@ class MlService {
 
   // ── Public entry point ────────────────────────────────────────────────────
 
-  /// Returns {classLabel: score} sorted descending.
-  /// Always resolves within [_kTimeout]; falls back to demo on any error.
-  Future<Map<String, double>> classify(String imagePath) async {
+  /// Returns an [MlResult] sorted descending by score.
+  /// Always resolves within [_kTimeout]; falls back to [_mockResult] on error.
+  Future<MlResult> classify(String imagePath) async {
     print('ML: starting analysis');
     print('ML: model loaded = $isModelLoaded');
 
@@ -109,7 +127,7 @@ class MlService {
     }
   }
 
-  Future<Map<String, double>> _runClassify(String imagePath) async {
+  Future<MlResult> _runClassify(String imagePath) async {
     await init();
 
     if (_modelMissing || _session == null) {
@@ -152,7 +170,7 @@ class MlService {
 
   // ── YOLOv8 output parser ──────────────────────────────────────────────────
 
-  Map<String, double> _parseYoloOutput(List<List<List<double>>> rawOutput) {
+  MlResult _parseYoloOutput(List<List<List<double>>> rawOutput) {
     // rawOutput[0] → shape [8][8400]
     // channels 0-3: bbox (cx, cy, w, h)
     // channels 4-7: class scores for [Roya, Coco, Sano, Minador]
@@ -180,28 +198,37 @@ class MlService {
     final anyDetected = bestScore.any((s) => s >= _kConfThreshold);
 
     if (!anyDetected) {
-      // No confident detection — report healthy
-      print('ML: no detection above threshold (${_kConfThreshold}), reporting sano');
-      return {
-        'sano': 0.92,
-        'roya': 0.03,
-        'coco': 0.03,
-        'minador': 0.02,
-      };
+      print('ML: no detection above threshold (${_kConfThreshold})');
+      _lastLesionCount = 0;
+      return MlNoDetection();
     }
+
+    // Find top class index (highest bestScore)
+    int topClassIdx = 0;
+    for (int c = 1; c < numClasses; c++) {
+      if (bestScore[c] > bestScore[topClassIdx]) topClassIdx = c;
+    }
+
+    // Count anchor proposals above threshold for the top class
+    int lesionCount = 0;
+    for (int i = 0; i < numDetections; i++) {
+      if (channels[4 + topClassIdx][i] >= _kConfThreshold) lesionCount++;
+    }
+    _lastLesionCount = lesionCount > 0 ? lesionCount : 1;
+    print('ML: lesion count for top class (${_kYoloClasses[topClassIdx]}) = $_lastLesionCount');
 
     // Build result map and sort descending by score
     final result = <String, double>{};
     for (int c = 0; c < numClasses; c++) {
       result[_kYoloClasses[c]] = bestScore[c];
     }
-    return Map.fromEntries(
-        result.entries.toList()..sort((a, b) => b.value.compareTo(a.value)));
+    return MlDetections(Map.fromEntries(
+        result.entries.toList()..sort((a, b) => b.value.compareTo(a.value))));
   }
 
   // ── Demo fallback ─────────────────────────────────────────────────────────
 
-  Map<String, double> _mockResult(String imagePath) {
+  MlDetections _mockResult(String imagePath) {
     final hash = imagePath.hashCode.abs();
     final labelIndex = hash % _kYoloClasses.length;
     final primary = 0.65 + (hash % 30) / 100.0;
@@ -211,8 +238,8 @@ class MlService {
     for (int i = 0; i < _kYoloClasses.length; i++) {
       result[_kYoloClasses[i]] = i == labelIndex ? primary : rest;
     }
-    return Map.fromEntries(
-        result.entries.toList()..sort((a, b) => b.value.compareTo(a.value)));
+    return MlDetections(Map.fromEntries(
+        result.entries.toList()..sort((a, b) => b.value.compareTo(a.value))));
   }
 
   bool get isModelLoaded => _initialized && !_modelMissing && _session != null;
