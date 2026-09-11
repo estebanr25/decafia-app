@@ -40,9 +40,6 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
     if (pos != null) {
       lat = pos.latitude;
       lon = pos.longitude;
-    } else {
-      lat = 6.441083;
-      lon = -73.215445;
     }
 
     final result = await provider.analyze(_selectedImage!.path, lat: lat, lon: lon);

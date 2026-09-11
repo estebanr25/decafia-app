@@ -75,4 +75,13 @@ class DatabaseService {
         'SELECT disease, COUNT(*) as count FROM diagnoses GROUP BY disease');
     return {for (final r in rows) r['disease'] as String: r['count'] as int};
   }
+
+  Future<int> countFallbackCoordinateRows() async {
+    final db = await database;
+    final rows = await db.rawQuery(
+        'SELECT COUNT(*) AS cnt FROM diagnoses '
+        'WHERE ABS(latitude  - 6.441083)     < 0.0001 '
+        '  AND ABS(longitude - (-73.215445)) < 0.0001');
+    return (rows.first['cnt'] as int?) ?? 0;
+  }
 }

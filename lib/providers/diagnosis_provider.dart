@@ -14,6 +14,7 @@ class DiagnosisProvider extends ChangeNotifier {
   int _lastLesionCount = 1;
   String? _errorMessage;
   bool _isLoading = false;
+  int _legacyFallbackCount = 0;
 
   List<Diagnosis> get history => List.unmodifiable(_history);
   AnalysisState get state => _state;
@@ -24,6 +25,9 @@ class DiagnosisProvider extends ChangeNotifier {
   int get lastLesionCount => _lastLesionCount;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
+  int get legacyFallbackCount => _legacyFallbackCount;
+  int get noLocationCount =>
+      _history.where((d) => d.latitude == null).length;
 
   // ── History management ────────────────────────────────────────────────────
 
@@ -31,6 +35,12 @@ class DiagnosisProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     _history = await DatabaseService.instance.getAllDiagnoses();
+    _legacyFallbackCount =
+        await DatabaseService.instance.countFallbackCoordinateRows();
+    if (_legacyFallbackCount > 0) {
+      debugPrint(
+          'GPS: $_legacyFallbackCount row(s) carry the legacy El Socorro fallback coordinate.');
+    }
     _isLoading = false;
     notifyListeners();
   }

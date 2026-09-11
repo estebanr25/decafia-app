@@ -350,7 +350,9 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             bottom: 80,
             left: 12,
-            child: _Legend(),
+            child: _Legend(
+              noLocationCount: provider.noLocationCount,
+            ),
           ),
 
           // ── Loading indicator ──────────────────────────────────────
@@ -411,6 +413,10 @@ class _MapScreenState extends State<MapScreen> {
 }
 
 class _Legend extends StatelessWidget {
+  final int noLocationCount;
+
+  const _Legend({required this.noLocationCount});
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -420,23 +426,33 @@ class _Legend extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
-          children: kDiseaseInfo.entries.map((e) {
-            final color = diseaseColor(e.key);
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                        color: color, shape: BoxShape.circle)),
-                const SizedBox(width: 4),
-                Text(e.value['nameEs']!,
-                    style: const TextStyle(fontSize: 10)),
-                const SizedBox(height: 2),
-              ],
-            );
-          }).toList(),
+          children: [
+            ...kDiseaseInfo.entries.map((e) {
+              final color = diseaseColor(e.key);
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                          color: color, shape: BoxShape.circle)),
+                  const SizedBox(width: 4),
+                  Text(e.value['nameEs']!,
+                      style: const TextStyle(fontSize: 10)),
+                  const SizedBox(height: 2),
+                ],
+              );
+            }),
+            if (noLocationCount > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                '$noLocationCount sin ubicación GPS',
+                style: TextStyle(
+                    fontSize: 9, color: Colors.grey.shade500),
+              ),
+            ],
+          ],
         ),
       ),
     );

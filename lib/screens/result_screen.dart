@@ -200,18 +200,28 @@ class _ResultScreenState extends State<ResultScreen> {
               _InfoSection('Tratamiento', info['treatment']!),
             ],
 
-            // Location
-            if (d.latitude != null) ...[
+            // Location — always shown except for model error screen
+            if (d.disease != 'model_unavailable') ...[
               const Divider(),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.location_on,
-                    color: Color(0xFF0F4C2A)),
-                title: const Text('Ubicación registrada'),
-                subtitle: Text(
-                    '${d.latitude!.toStringAsFixed(5)}, '
-                    '${d.longitude!.toStringAsFixed(5)}'),
-              ),
+              if (d.latitude != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.location_on,
+                      color: Color(0xFF0F4C2A)),
+                  title: const Text('Ubicación registrada'),
+                  subtitle: Text(
+                      '${d.latitude!.toStringAsFixed(5)}, '
+                      '${d.longitude!.toStringAsFixed(5)}'),
+                )
+              else
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.location_off,
+                      color: Colors.grey.shade500),
+                  title: const Text('Ubicación no disponible'),
+                  subtitle: const Text(
+                      'No se obtuvo señal GPS al momento del análisis.'),
+                ),
             ],
 
             // Notes and Save — hidden for model errors (nothing to persist)
