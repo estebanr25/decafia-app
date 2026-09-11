@@ -427,7 +427,9 @@ class _Legend extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            ...kDiseaseInfo.entries.map((e) {
+            ...kDiseaseInfo.entries
+                .where((e) => kDiseaseLabels.contains(e.key))
+                .map((e) {
               final color = diseaseColor(e.key);
               return Row(
                 mainAxisSize: MainAxisSize.min,

@@ -11,6 +11,16 @@ const List<String> kDiseaseLabels = [
 
 // ── Human-readable info per class ─────────────────────────────────────────────
 const Map<String, Map<String, String>> kDiseaseInfo = {
+  'no_detection': {
+    'nameEs': 'Sin síntomas detectados',
+    'description':
+        'El modelo no encontró ninguna clase por encima del umbral de confianza. '
+        'Esto puede indicar que la hoja está sana o que la imagen no tiene suficiente calidad.',
+    'symptoms': 'No se observaron síntomas con confianza suficiente.',
+    'treatment':
+        'Toma otra foto con mejor iluminación y enfoque, o revisa otras hojas de la planta.',
+    'severity': 'none',
+  },
   'sano': {
     'nameEs': 'Planta Sana',
     'description':
@@ -31,13 +41,29 @@ const Map<String, Map<String, String>> kDiseaseInfo = {
     'severity': 'high',
   },
   'coco': {
-    'nameEs': 'Cochinilla',
-    'description':
-        'Infestación por cochinillas (Coccinellidae) que se adhieren al tallo, ramas y hojas del cafeto chupando la savia. Producen melaza que favorece la aparición de fumagina.',
-    'symptoms':
-        'Masas algodonosas o cerosas blancas en tallos, ramas y hojas. Amarillamiento y caída prematura de hojas. Presencia de fumagina (hollín negro) sobre las partes afectadas.',
-    'treatment':
-        'Imidacloprid 350 SC (0.5 ml/litro) aplicado al suelo o follaje. Control biológico con Cryptolaemus montrouzieri. Lavado con solución jabonosa en focos iniciales.',
+    'nameEs': 'Coco (Vaquita)',
+    'scientificName': 'Compsus sp. / Epicaerus sp. (Curculionidae)',
+    'description': 'El Coco o Vaquita es un picudo masticador '
+        '(familia Curculionidae, géneros Compsus sp. o Epicaerus sp.) '
+        'documentado por Cenicafé como plaga del follaje del cafeto '
+        'en la zona cafetera colombiana. Los adultos realizan '
+        'perforaciones irregulares en el limbo foliar.',
+    'symptoms': 'Perforaciones irregulares que atraviesan toda la '
+        'lámina foliar, con bordes necróticos cafés. Cortes de tamaño '
+        'variable en cualquier parte de la hoja. En ataques severos '
+        'produce defoliación parcial de la planta.',
+    'conditions': 'Mayor incidencia en épocas secas y en plantas '
+        'con estrés hídrico. Los adultos se alimentan de noche y '
+        'se dejan caer al suelo cuando se perturba la planta.',
+    'impact': 'Reducción del área fotosintética y del vigor de '
+        'la planta. Puede causar defoliación parcial en ataques '
+        'severos, afectando la producción del siguiente ciclo.',
+    'treatment': 'Clorpirifos 480 EC (1.5 mL/litro) o Deltametrina '
+        '25 EC (0.5 mL/litro). Aplicar en horas frescas. '
+        'Control cultural: recolección manual de adultos en horas '
+        'de la mañana sacudiendo las ramas sobre una bolsa plástica.',
+    'source': 'Manual del Cafetero Colombiano, Cenicafé (2013), '
+        'Vol. 2, pp. 261-306. DOI: 10.38141/cenbook-0026_25',
     'severity': 'medium',
   },
   'minador': {
@@ -62,6 +88,8 @@ Color diseaseColor(String disease) {
       return const Color(0xFF1565C0);
     case 'minador':
       return const Color(0xFF6A1B9A);
+    case 'no_detection':
+      return const Color(0xFF78909C); // blue-grey, distinct from all classes
     default:
       return const Color(0xFF607D8B);
   }
@@ -77,6 +105,8 @@ IconData diseaseIcon(String disease) {
       return Icons.bug_report;
     case 'minador':
       return Icons.pest_control;
+    case 'no_detection':
+      return Icons.search_off_rounded;
     default:
       return Icons.help_outline;
   }

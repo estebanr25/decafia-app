@@ -82,22 +82,25 @@ class DiagnosisCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: diagnosis.confidence,
-                      backgroundColor: color.withAlpha(30),
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                      minHeight: 4,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                    if (diagnosis.disease != 'no_detection') ...[
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: diagnosis.confidence,
+                        backgroundColor: color.withAlpha(30),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                        minHeight: 4,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text(
-                          '${(diagnosis.confidence * 100).toStringAsFixed(1)}% confianza',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
-                        ),
+                        if (diagnosis.disease != 'no_detection')
+                          Text(
+                            '${(diagnosis.confidence * 100).toStringAsFixed(1)}% confianza',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600),
+                          ),
                         const Spacer(),
                         Text(
                           DateFormat('dd/MM/yyyy HH:mm')
