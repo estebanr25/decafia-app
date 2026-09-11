@@ -11,6 +11,13 @@ const List<String> kDiseaseLabels = [
 
 // ── Human-readable info per class ─────────────────────────────────────────────
 const Map<String, Map<String, String>> kDiseaseInfo = {
+  'model_unavailable': {
+    'nameEs': 'Error de análisis',
+    'description': 'El modelo no pudo procesar la imagen.',
+    'symptoms': '',
+    'treatment': 'Reinstala la aplicación o contacta al equipo de DECAFIA.',
+    'severity': 'none',
+  },
   'no_detection': {
     'nameEs': 'Sin síntomas detectados',
     'description':
@@ -90,6 +97,8 @@ Color diseaseColor(String disease) {
       return const Color(0xFF6A1B9A);
     case 'no_detection':
       return const Color(0xFF78909C); // blue-grey, distinct from all classes
+    case 'model_unavailable':
+      return const Color(0xFFB71C1C); // deep red
     default:
       return const Color(0xFF607D8B);
   }
@@ -107,6 +116,8 @@ IconData diseaseIcon(String disease) {
       return Icons.pest_control;
     case 'no_detection':
       return Icons.search_off_rounded;
+    case 'model_unavailable':
+      return Icons.error_outline_rounded;
     default:
       return Icons.help_outline;
   }

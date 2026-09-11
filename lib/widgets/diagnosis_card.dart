@@ -22,6 +22,8 @@ class DiagnosisCard extends StatelessWidget {
     final color = diseaseColor(diagnosis.disease);
     final name = info?['nameEs'] ?? diagnosis.disease;
     final severity = info?['severity'] ?? 'unknown';
+    final _showConfidence = diagnosis.disease != 'no_detection' &&
+        diagnosis.disease != 'model_unavailable';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -82,7 +84,7 @@ class DiagnosisCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (diagnosis.disease != 'no_detection') ...[
+                    if (_showConfidence) ...[
                       const SizedBox(height: 4),
                       LinearProgressIndicator(
                         value: diagnosis.confidence,
@@ -95,7 +97,7 @@ class DiagnosisCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        if (diagnosis.disease != 'no_detection')
+                        if (_showConfidence)
                           Text(
                             '${(diagnosis.confidence * 100).toStringAsFixed(1)}% confianza',
                             style: TextStyle(
