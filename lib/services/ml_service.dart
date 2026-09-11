@@ -47,6 +47,8 @@ Float32List _preprocessBytes(Uint8List rawBytes) {
 
 // ── Inference result type ────────────────────────────────────────────────────
 
+enum MlFailureMode { timeout, inferenceError, modelMissing }
+
 sealed class MlResult {}
 
 /// Real model output: at least one class scored ≥ [_kConfThreshold].
@@ -59,6 +61,14 @@ class MlDetections extends MlResult {
 /// Model ran but no class scored ≥ [_kConfThreshold].
 /// No numeric confidence is fabricated; the UI must show a neutral message.
 class MlNoDetection extends MlResult {}
+
+/// Model failed before or during inference.
+/// No numeric values are fabricated; [mode] identifies the failure category.
+class MlModelUnavailable extends MlResult {
+  final MlFailureMode mode;
+  final String reason;
+  MlModelUnavailable(this.mode, this.reason);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -115,15 +125,16 @@ class MlService {
       final result = await _runClassify(imagePath).timeout(
         _kTimeout,
         onTimeout: () {
-          print('ML: TIMEOUT after ${_kTimeout.inSeconds}s — using demo result');
-          return _mockResult(imagePath);
+          print('ML: TIMEOUT after ${_kTimeout.inSeconds}s');
+          return MlModelUnavailable(MlFailureMode.timeout,
+              'Inference timed out after ${_kTimeout.inSeconds}s');
         },
       );
       print('ML: inference complete, result = $result');
       return result;
     } catch (e) {
-      print('ML: classify error — $e — using demo result');
-      return _mockResult(imagePath);
+      print('ML: classify error — $e');
+      return MlModelUnavailable(MlFailureMode.inferenceError, e.toString());
     }
   }
 
@@ -131,8 +142,9 @@ class MlService {
     await init();
 
     if (_modelMissing || _session == null) {
-      print('ML: model not available, using demo result');
-      return _mockResult(imagePath);
+      print('ML: model not available — $_kModelAsset not loaded');
+      return MlModelUnavailable(
+          MlFailureMode.modelMissing, '$_kModelAsset not loaded');
     }
 
     // Preprocess in background isolate
@@ -221,22 +233,6 @@ class MlService {
     final result = <String, double>{};
     for (int c = 0; c < numClasses; c++) {
       result[_kYoloClasses[c]] = bestScore[c];
-    }
-    return MlDetections(Map.fromEntries(
-        result.entries.toList()..sort((a, b) => b.value.compareTo(a.value))));
-  }
-
-  // ── Demo fallback ─────────────────────────────────────────────────────────
-
-  MlDetections _mockResult(String imagePath) {
-    final hash = imagePath.hashCode.abs();
-    final labelIndex = hash % _kYoloClasses.length;
-    final primary = 0.65 + (hash % 30) / 100.0;
-    final rest = (1.0 - primary) / (_kYoloClasses.length - 1);
-
-    final result = <String, double>{};
-    for (int i = 0; i < _kYoloClasses.length; i++) {
-      result[_kYoloClasses[i]] = i == labelIndex ? primary : rest;
     }
     return MlDetections(Map.fromEntries(
         result.entries.toList()..sort((a, b) => b.value.compareTo(a.value))));

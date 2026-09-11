@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/diagnosis.dart';
 import '../providers/diagnosis_provider.dart';
+import '../services/ml_service.dart';
 import '../utils/disease_data.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -49,14 +50,16 @@ class _ResultScreenState extends State<ResultScreen> {
     final color = diseaseColor(d.disease);
     final name = info?['nameEs'] ?? d.disease;
     final severity = info?['severity'] ?? 'unknown';
-    final probs = context.watch<DiagnosisProvider>().lastProbabilities;
-    final lesionCount = context.watch<DiagnosisProvider>().lastLesionCount;
+    final provider = context.watch<DiagnosisProvider>();
+    final probs = provider.lastProbabilities;
+    final lesionCount = provider.lastLesionCount;
+    final failureMode = provider.failureMode;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resultado'),
         actions: [
-          if (!_saved)
+          if (!_saved && d.disease != 'model_unavailable')
             TextButton.icon(
               onPressed: _saving ? null : _save,
               icon: _saving
@@ -98,7 +101,10 @@ class _ResultScreenState extends State<ResultScreen> {
             const SizedBox(height: 20),
 
             // Primary result
-            if (d.disease == 'no_detection')
+            if (d.disease == 'model_unavailable')
+              _ModelUnavailableCard(
+                  mode: failureMode ?? MlFailureMode.inferenceError)
+            else if (d.disease == 'no_detection')
               const _NoDetectionCard()
             else
               Container(
@@ -208,39 +214,40 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             ],
 
-            // Notes
-            const Divider(),
-            const SizedBox(height: 8),
-            Text('Notas (opcional)',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _notesController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Agrega observaciones sobre esta muestra...',
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            if (!_saved)
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F4C2A),
-                    foregroundColor: Colors.white,
-                  ),
-                  icon: const Icon(Icons.save),
-                  label: const Text('Guardar diagnóstico'),
+            // Notes and Save — hidden for model errors (nothing to persist)
+            if (d.disease != 'model_unavailable') ...[
+              const Divider(),
+              const SizedBox(height: 8),
+              Text('Notas (opcional)',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _notesController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Agrega observaciones sobre esta muestra...',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                 ),
               ),
+              const SizedBox(height: 24),
+              if (!_saved)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: _saving ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F4C2A),
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.save),
+                    label: const Text('Guardar diagnóstico'),
+                  ),
+                ),
+            ],
           ],
         ),
       ),
@@ -390,6 +397,70 @@ class _NoDetectionCard extends StatelessWidget {
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModelUnavailableCard extends StatelessWidget {
+  final MlFailureMode mode;
+  const _ModelUnavailableCard({required this.mode});
+
+  @override
+  Widget build(BuildContext context) {
+    final (heading, body) = switch (mode) {
+      MlFailureMode.timeout => (
+          'El análisis tardó demasiado',
+          'El modelo no completó la inferencia a tiempo. '
+              'Cierra aplicaciones en segundo plano y vuelve a intentarlo.',
+        ),
+      MlFailureMode.inferenceError => (
+          'Error al procesar la imagen',
+          'Ocurrió un error durante el análisis. '
+              'Selecciona otra imagen o vuelve a intentarlo.',
+        ),
+      MlFailureMode.modelMissing => (
+          'Modelo no disponible en esta instalación',
+          'El archivo del modelo no se encontró. '
+              'Reinstala la aplicación o contacta al equipo de DECAFIA.',
+        ),
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.error_outline_rounded,
+                  color: Colors.red.shade700, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  heading,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.shade800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            body,
+            style: TextStyle(color: Colors.red.shade700, height: 1.4),
+          ),
         ],
       ),
     );

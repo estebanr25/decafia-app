@@ -70,8 +70,10 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<DiagnosisProvider>().state;
+    final provider = context.watch<DiagnosisProvider>();
+    final state = provider.state;
     final isAnalyzing = state == AnalysisState.analyzing;
+    final failureMode = provider.failureMode;
     final color = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
@@ -79,7 +81,7 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
       body: Column(
         children: [
           // Model status banner
-          if (!MlService.instance.isModelLoaded)
+          if (!MlService.instance.isModelLoaded || failureMode != null)
             Container(
               width: double.infinity,
               color: Colors.amber.shade100,
@@ -91,7 +93,7 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Modo demo: coloca decafia.onnx en assets/models/ para activar el modelo real.',
+                      _bannerMessage(failureMode),
                       style: TextStyle(
                           fontSize: 12, color: Colors.amber.shade900),
                     ),
@@ -185,6 +187,17 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
         ],
       ),
     );
+  }
+
+  String _bannerMessage(MlFailureMode? mode) {
+    if (mode == MlFailureMode.timeout) {
+      return 'El análisis tardó demasiado. Cierra aplicaciones en segundo plano e intenta de nuevo.';
+    }
+    if (mode == MlFailureMode.inferenceError) {
+      return 'Error al procesar la última imagen. Selecciona otra foto e intenta de nuevo.';
+    }
+    // modelMissing or model not yet loaded
+    return 'Modo demo: coloca decafia.onnx en assets/models/ para activar el modelo real.';
   }
 
   Widget _buildPlaceholder(Color color) {

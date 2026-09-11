@@ -10,6 +10,7 @@ class DiagnosisProvider extends ChangeNotifier {
   AnalysisState _state = AnalysisState.idle;
   Map<String, double> _lastProbabilities = {};
   bool _noDetection = false;
+  MlFailureMode? _failureMode;
   int _lastLesionCount = 1;
   String? _errorMessage;
   bool _isLoading = false;
@@ -19,6 +20,7 @@ class DiagnosisProvider extends ChangeNotifier {
   Map<String, double> get lastProbabilities =>
       Map.unmodifiable(_lastProbabilities);
   bool get noDetection => _noDetection;
+  MlFailureMode? get failureMode => _failureMode;
   int get lastLesionCount => _lastLesionCount;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
@@ -48,13 +50,22 @@ class DiagnosisProvider extends ChangeNotifier {
       if (result is MlDetections) {
         _lastProbabilities = result.scores;
         _noDetection = false;
+        _failureMode = null;
         disease = result.scores.entries.first.key;
         confidence = result.scores.entries.first.value;
-      } else {
-        // MlNoDetection — no fabricated values
+      } else if (result is MlNoDetection) {
         _lastProbabilities = {};
         _noDetection = true;
+        _failureMode = null;
         disease = 'no_detection';
+        confidence = 0.0;
+      } else {
+        // MlModelUnavailable — model failed; no fabricated values; no SQLite write
+        final unavailable = result as MlModelUnavailable;
+        _lastProbabilities = {};
+        _noDetection = false;
+        _failureMode = unavailable.mode;
+        disease = 'model_unavailable';
         confidence = 0.0;
       }
 
@@ -111,6 +122,7 @@ class DiagnosisProvider extends ChangeNotifier {
     _state = AnalysisState.idle;
     _lastProbabilities = {};
     _noDetection = false;
+    _failureMode = null;
     _lastLesionCount = 1;
     _errorMessage = null;
     notifyListeners();
