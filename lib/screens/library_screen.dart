@@ -33,20 +33,30 @@ class LibraryScreen extends StatelessWidget {
           SizedBox(height: 16),
           _DiseaseCard(
             diseaseKey: 'coco',
-            scientificName: 'Coccinellidae',
-            symptoms: 'Masas algodonosas o cerosas blancas en tallos, ramas y hojas. '
-                'Amarillamiento y caída prematura de hojas. '
-                'Presencia de fumagina (hollín negro) sobre partes afectadas.',
-            conditions: 'Épocas secas con alta temperatura (24–30 °C). '
-                'Favorecida por déficit hídrico y falta de control de malezas.',
-            impact: 'Reducción del vigor de la planta y pérdida de producción '
-                'del 10–25% en infestaciones severas. La fumagina reduce fotosíntesis.',
-            treatment: 'Imidacloprid 350 SC (0.5 ml/litro) al suelo o follaje. '
-                'Control biológico con Cryptolaemus montrouzieri. '
-                'Lavado con solución jabonosa en focos iniciales.',
-            urgencyLabel: 'MEDIA — revisar en 5 días',
+            scientificName: 'Compsus sp. / Epicaerus sp. (Curculionidae)',
+            symptoms: 'Perforaciones irregulares que atraviesan toda la lámina foliar '
+                'con bordes necróticos cafés. Los adultos se alimentan de noche '
+                'realizando cortes de tamaño variable en cualquier parte de la hoja.',
+            conditions: 'Mayor incidencia en épocas secas y con estrés hídrico. '
+                'El insecto se deja caer al suelo cuando se perturba la planta — '
+                'comportamiento diagnóstico típico.',
+            impact: 'Reducción del área fotosintética. En ataques severos puede '
+                'causar defoliación parcial afectando la producción del siguiente ciclo.',
+            treatment: 'Clorpirifos 480 EC (1.5 mL/litro) o Deltametrina 25 EC '
+                '(0.5 mL/litro). Control cultural: sacudir ramas sobre bolsa plástica '
+                'en horas de la mañana para recolectar adultos. '
+                'Fuente: Manual del Cafetero Colombiano, Cenicafé.',
+            urgencyLabel: 'MEDIA — tratar en 5 días',
             urgencyColor: Color(0xFF1565C0),
-            costNote: 'COP 35,000–55,000 por litro de Imidacloprid 350 SC.',
+            costNote: 'COP 25,000–40,000 por litro de insecticida.',
+            identificationText: 'El adulto mide 8–12 mm, cuerpo ovalado-robusto '
+                'color café-dorado con patrón moteado de escamas. Tiene el rostro '
+                'corto característico de los picudos (Curculionidae). Los élitros '
+                'están fusionados — no puede volar. Se alimenta de noche; de día '
+                'permanece inmóvil en las hojas o se deja caer al suelo si se '
+                'perturba. Fuente: Cenicafé, Manual del Cafetero Colombiano (2013).',
+            sourceNote: 'Fuente: Manual del Cafetero Colombiano, Cenicafé (2013), '
+                'Vol. 2, pp. 261-306. DOI: 10.38141/cenbook-0026_25',
           ),
           SizedBox(height: 16),
           _DiseaseCard(
@@ -85,6 +95,8 @@ class _DiseaseCard extends StatelessWidget {
   final String urgencyLabel;
   final Color urgencyColor;
   final String costNote;
+  final String? identificationText;
+  final String? sourceNote;
 
   const _DiseaseCard({
     required this.diseaseKey,
@@ -96,6 +108,8 @@ class _DiseaseCard extends StatelessWidget {
     required this.urgencyLabel,
     required this.urgencyColor,
     required this.costNote,
+    this.identificationText,
+    this.sourceNote,
   });
 
   @override
@@ -216,6 +230,51 @@ class _DiseaseCard extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // ── Cómo identificarlo (expandable, optional) ─────────
+                if (identificationText != null) ...[
+                  const SizedBox(height: 8),
+                  Theme(
+                    data: Theme.of(context)
+                        .copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      leading: Icon(Icons.zoom_in, color: color, size: 20),
+                      title: Text(
+                        'Cómo identificarlo',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 28, right: 0, bottom: 8),
+                          child: Text(
+                            identificationText!,
+                            style: const TextStyle(fontSize: 13, height: 1.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // ── Source citation (optional) ────────────────────────
+                if (sourceNote != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    sourceNote!,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

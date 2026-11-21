@@ -170,7 +170,7 @@ class _DiseaseReference extends StatelessWidget {
     const diseases = [
       ('Planta Sana', 'Sin síntomas de enfermedad · Sin riesgo'),
       ('Roya del Cafeto', 'Hemileia vastatrix · Riesgo alto'),
-      ('Cochinilla (Coco)', 'Coccinellidae · Riesgo medio'),
+      ('Coco (Vaquita)', 'Compsus sp. / Epicaerus sp. (Curculionidae) · Riesgo medio'),
       ('Minador de la Hoja', 'Leucoptera coffeella · Riesgo medio'),
     ];
 

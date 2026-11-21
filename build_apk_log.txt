@@ -1,0 +1,46 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260910223544
+Username: PC_DE_ESTEBAN\luise
+RunAs User: PC_DE_ESTEBAN\luise
+Configuration Name: 
+Machine: PC_DE_ESTEBAN (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File .\build_apk.ps1
+Process ID: 7356
+PSVersion: 5.1.26100.9444
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9444
+BuildVersion: 10.0.26100.9444
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+======================================================================
+  DECAFIA APK Builder  -  2026-09-10 22:35:44
+======================================================================
+
+[STEP 1] Locating flutter.bat
+  OK  Found on PATH: C:\flutter\bin\flutter.bat
+  >>  Verifying flutter.bat executes...
+  OK  Γöé A new version of Flutter is available!                  Γöé
+
+[STEP 2] Locating a valid JDK
+  OK  Found Android Studio JBR: C:\Program Files\Android\Android Studio\jbr
+  >>  JAVA_HOME set to: C:\Program Files\Android\Android Studio\jbr
+  >>  Confirming java -version:
+PS>TerminatingError(java.exe): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: openjdk version "21.0.9" 2025-10-21"
+>> TerminatingError(java.exe): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: openjdk version "21.0.9" 2025-10-21"
+The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: openjdk version "21.0.9" 2025-10-21
+java.exe : openjdk version "21.0.9" 2025-10-21
+At C:\Users\luise\Documents\decafia_app\build_apk.ps1:217 char:12
++ $javaVer = & "$env:JAVA_HOME\bin\java.exe" -version 2>&1
++            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (openjdk version "21.0.9" 2025-10-21:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+**********************
+Windows PowerShell transcript end
+End time: 20260910223553
+**********************
